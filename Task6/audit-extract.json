@@ -1,0 +1,151 @@
+[
+  {
+    "kind": "Event",
+    "apiVersion": "audit.k8s.io/v1",
+    "level": "Metadata",
+    "auditID": "a1f1c001-0001-0000-0000-000000000001",
+    "stage": "ResponseComplete",
+    "requestURI": "/api/v1/namespaces/kube-system/secrets/default-token-xxxx",
+    "verb": "get",
+    "user": {
+      "username": "kubernetes-admin",
+      "groups": ["system:masters", "system:authenticated"]
+    },
+    "impersonatedUser": {
+      "username": "system:serviceaccount:secure-ops:monitoring",
+      "groups": ["system:serviceaccounts", "system:authenticated"]
+    },
+    "sourceIPs": ["192.168.49.1"],
+    "objectRef": {
+      "resource": "secrets",
+      "namespace": "kube-system",
+      "name": "default-token-xxxx",
+      "apiVersion": "v1"
+    },
+    "responseStatus": { "code": 200 },
+    "requestReceivedTimestamp": "2025-05-22T10:00:01Z"
+  },
+  {
+    "kind": "Event",
+    "apiVersion": "audit.k8s.io/v1",
+    "level": "RequestResponse",
+    "auditID": "a1f1c001-0002-0000-0000-000000000002",
+    "stage": "ResponseComplete",
+    "requestURI": "/api/v1/namespaces/secure-ops/pods",
+    "verb": "create",
+    "user": {
+      "username": "kubernetes-admin",
+      "groups": ["system:masters", "system:authenticated"]
+    },
+    "sourceIPs": ["192.168.49.1"],
+    "objectRef": {
+      "resource": "pods",
+      "namespace": "secure-ops",
+      "name": "privileged-pod",
+      "apiVersion": "v1"
+    },
+    "requestObject": {
+      "kind": "Pod",
+      "metadata": { "name": "privileged-pod", "namespace": "secure-ops" },
+      "spec": {
+        "containers": [
+          {
+            "name": "pwn",
+            "image": "alpine",
+            "command": ["sleep", "3600"],
+            "securityContext": { "privileged": true }
+          }
+        ],
+        "restartPolicy": "Never"
+      }
+    },
+    "responseStatus": { "code": 201 },
+    "requestReceivedTimestamp": "2025-05-22T10:00:05Z"
+  },
+  {
+    "kind": "Event",
+    "apiVersion": "audit.k8s.io/v1",
+    "level": "Metadata",
+    "auditID": "a1f1c001-0003-0000-0000-000000000003",
+    "stage": "ResponseComplete",
+    "requestURI": "/api/v1/namespaces/kube-system/pods/coredns-xxxx/exec?command=cat&command=/etc/resolv.conf&container=coredns",
+    "verb": "create",
+    "user": {
+      "username": "kubernetes-admin",
+      "groups": ["system:masters", "system:authenticated"]
+    },
+    "sourceIPs": ["192.168.49.1"],
+    "objectRef": {
+      "resource": "pods",
+      "subresource": "exec",
+      "namespace": "kube-system",
+      "name": "coredns-xxxx",
+      "apiVersion": "v1"
+    },
+    "responseStatus": { "code": 101 },
+    "requestReceivedTimestamp": "2025-05-22T10:00:08Z"
+  },
+  {
+    "kind": "Event",
+    "apiVersion": "audit.k8s.io/v1",
+    "level": "Metadata",
+    "auditID": "a1f1c001-0004-0000-0000-000000000004",
+    "stage": "ResponseComplete",
+    "requestURI": "/api/v1/namespaces/kube-system/configmaps/audit-policy",
+    "verb": "delete",
+    "user": {
+      "username": "kubernetes-admin",
+      "groups": ["system:masters", "system:authenticated"]
+    },
+    "impersonatedUser": { "username": "admin" },
+    "sourceIPs": ["192.168.49.1"],
+    "objectRef": {
+      "resource": "configmaps",
+      "namespace": "kube-system",
+      "name": "audit-policy",
+      "apiVersion": "v1"
+    },
+    "responseStatus": { "code": 404 },
+    "requestReceivedTimestamp": "2025-05-22T10:00:10Z"
+  },
+  {
+    "kind": "Event",
+    "apiVersion": "audit.k8s.io/v1",
+    "level": "RequestResponse",
+    "auditID": "a1f1c001-0005-0000-0000-000000000005",
+    "stage": "ResponseComplete",
+    "requestURI": "/apis/rbac.authorization.k8s.io/v1/namespaces/secure-ops/rolebindings",
+    "verb": "create",
+    "user": {
+      "username": "kubernetes-admin",
+      "groups": ["system:masters", "system:authenticated"]
+    },
+    "sourceIPs": ["192.168.49.1"],
+    "objectRef": {
+      "resource": "rolebindings",
+      "namespace": "secure-ops",
+      "name": "escalate-binding",
+      "apiGroup": "rbac.authorization.k8s.io",
+      "apiVersion": "v1"
+    },
+    "requestObject": {
+      "kind": "RoleBinding",
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "metadata": { "name": "escalate-binding", "namespace": "secure-ops" },
+      "subjects": [
+        {
+          "kind": "ServiceAccount",
+          "name": "monitoring",
+          "namespace": "secure-ops"
+        }
+      ],
+      "roleRef": {
+        "kind": "ClusterRole",
+        "name": "cluster-admin",
+        "apiGroup": "rbac.authorization.k8s.io"
+      }
+    },
+    "responseStatus": { "code": 201 },
+    "requestReceivedTimestamp": "2025-05-22T10:00:12Z"
+  }
+]
