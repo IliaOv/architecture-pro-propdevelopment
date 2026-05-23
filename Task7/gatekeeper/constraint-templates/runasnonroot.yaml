@@ -1,0 +1,67 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8srequiresecuritycontext
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequireSecurityContext
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties: {}
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8srequiresecuritycontext
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          not container_run_as_non_root(container)
+          msg := sprintf("container %q must set runAsNonRoot: true", [container.name])
+        }
+
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          not container_read_only_root_fs(container)
+          msg := sprintf("container %q must set readOnlyRootFilesystem: true", [container.name])
+        }
+
+        violation[{"msg": msg}] {
+          not pod_run_as_non_root
+          msg := "pod spec must set securityContext.runAsNonRoot: true when container-level value is absent"
+        }
+
+        container_run_as_non_root(container) {
+          container.securityContext.runAsNonRoot == true
+        }
+
+        container_run_as_non_root(container) {
+          input.review.object.spec.securityContext.runAsNonRoot == true
+        }
+
+        container_read_only_root_fs(container) {
+          container.securityContext.readOnlyRootFilesystem == true
+        }
+
+        pod_run_as_non_root {
+          input.review.object.spec.securityContext.runAsNonRoot == true
+        }
+
+        pod_run_as_non_root {
+          container := input_containers[_]
+          container.securityContext.runAsNonRoot == true
+        }
+
+        input_containers[container] {
+          container := input.review.object.spec.containers[_]
+        }
+
+        input_containers[container] {
+          container := input.review.object.spec.initContainers[_]
+        }
+
+        input_containers[container] {
+          container := input.review.object.spec.ephemeralContainers[_]
+        }

@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-hostpath
+  namespace: audit-zone
+  labels:
+    app: task7-insecure
+    violation: hostpath
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.25-alpine
+      volumeMounts:
+        - name: host-data
+          mountPath: /host-data
+  volumes:
+    - name: host-data
+      hostPath:
+        path: /tmp
+        type: Directory
